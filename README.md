@@ -14,6 +14,56 @@ The project uses the Lending Club loan data from 2007-2014, containing informati
 - Credit history (credit lines, delinquencies, inquiries)
 - Loan status (target variable)
 
+### Dataset Details
+
+**File:** `loan_data_2007_2014.csv`
+**Size:** ~228 MB (466,285 rows × 75 columns)
+**Source:** Lending Club Loan Data
+
+**Note:** Due to GitHub file size limitations, the dataset files are not included in this repository. 
+
+### How to Get the Dataset
+
+**Option 1: Download from Kaggle**
+1. Visit [Lending Club Loan Data on Kaggle](https://www.kaggle.com/datasets/wordsforthewise/lending-club)
+2. Download the dataset
+3. Place `loan_data_2007_2014.csv` in the `data/` folder
+
+**Option 2: Use Alternative Sources**
+- [Lending Club Historical Data](https://www.lendingclub.com/info/download-data.action) (if available)
+- Contact the repository owner for dataset access
+
+### Dataset Structure
+
+After downloading, your project structure should look like:
+```
+data/
+├── loan_data_2007_2014.csv          # Raw dataset (place here)
+└── loan_data_preprocessed.csv       # Generated after running the pipeline
+```
+
+### Key Features in Dataset
+
+**Numeric Features:**
+- `loan_amnt`: Loan amount
+- `int_rate`: Interest rate
+- `annual_inc`: Annual income
+- `dti`: Debt-to-income ratio
+- `installment`: Monthly installment
+- `revol_bal`: Revolving balance
+- `revol_util`: Revolving line utilization rate
+
+**Categorical Features:**
+- `grade`: Loan grade (A-G)
+- `sub_grade`: Loan sub-grade (A1-G5)
+- `home_ownership`: Home ownership status
+- `purpose`: Loan purpose
+- `term`: Loan term (36 or 60 months)
+- `addr_state`: Borrower's state
+
+**Target Variable:**
+- `loan_status`: Current status of the loan (Fully Paid, Charged Off, Default, etc.)
+
 ## Project Structure
 
 ```

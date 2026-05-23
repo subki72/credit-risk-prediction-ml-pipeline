@@ -130,3 +130,7 @@ cython_debug/
 # Backup files
 *.bak
 *.backup
+
+# Project specific - exclude presentation files and old folders
+*.pptx
+MuhammadSyafiiAssubki_VIX_IDX_Partners/
