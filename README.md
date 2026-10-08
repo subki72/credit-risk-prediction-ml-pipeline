@@ -68,6 +68,22 @@ data/
 
 ```
 .
+├── src/credit_risk/                      # Core Production Package
+│   ├── config.py                         # Settings, paths & feature contracts
+│   ├── schemas.py                        # Pydantic data validation schemas
+│   ├── transformers.py                   # Custom Scikit-Learn transformers
+│   ├── pipeline.py                       # Unified ColumnTransformer pipeline
+│   ├── service.py                        # Inference service & SHA-256 verification
+│   └── api.py                            # FastAPI REST microservice
+├── tests/                                # Automated Testing Suite (pytest)
+│   ├── test_transformers.py              # Unit tests for custom transformers
+│   ├── test_schemas.py                   # Schema validation unit tests
+│   ├── test_pipeline.py                  # Integration tests for pipeline
+│   ├── test_service.py                   # Integrity & service tests
+│   └── test_api.py                       # FastAPI endpoint integration tests
+├── .github/workflows/ci.yml              # GitHub Actions CI pipeline
+├── Dockerfile                            # Production multi-stage Dockerfile
+├── .dockerignore                         # Container build ignore rules
 ├── data/
 │   ├── loan_data_2007_2014.csv          # Raw dataset
 │   └── loan_data_preprocessed.csv       # Preprocessed dataset
@@ -75,9 +91,6 @@ data/
 │   ├── 01_target_distribution.png
 │   ├── 02_numeric_histograms.png
 │   ├── 03_correlation_heatmap.png
-│   ├── 04_categorical_*.png
-│   ├── 05_emp_length_addr_state.png
-│   ├── 06_outlier_boxplots.png
 │   ├── 07_target_proportion.png
 │   ├── 08_smote_comparison.png
 │   ├── 09_cm_*.png                      # Confusion matrices
@@ -86,21 +99,16 @@ data/
 │   ├── 12_cm_xgboost_tuned.png
 │   ├── 13_roc_baseline_vs_tuned.png
 │   ├── 14_feature_importance_top20.png
-│   ├── 15_final_model_comparison.png
 │   ├── 16_threshold_analysis.png
 │   └── 17_cm_optimal_threshold.png
-├── models/                               # Saved models
-│   ├── model_logistic_regression.pkl
-│   ├── model_decision_tree.pkl
-│   ├── model_random_forest.pkl
-│   ├── model_xgboost.pkl
-│   ├── model_xgboost_tuned.pkl
+├── models/                               # Saved models & SHA-256 checksums
 │   ├── model_final.pkl
-│   ├── scaler.pkl
-│   └── scaler_final.pkl
-├── credit_risk_prediction.py             # Main pipeline script
+│   ├── model_final.pkl.sha256
+│   ├── scaler_final.pkl
+│   └── scaler_final.pkl.sha256
+├── credit_risk_prediction.py             # Modular training pipeline script
 ├── credit_risk_prediction.ipynb          # Jupyter notebook version
-├── requirements.txt                      # Python dependencies
+├── requirements.txt                      # Pinned Python dependencies
 └── README.md                             # Project documentation
 ```
 
@@ -217,28 +225,112 @@ Alternatively, open and run the Jupyter notebook:
 jupyter notebook credit_risk_prediction.ipynb
 ```
 
-### Making Predictions with Trained Model
+### Running the Production REST API
 
+Start the high-performance FastAPI inference microservice with Uvicorn:
+```bash
+uvicorn src.credit_risk.api:app --host 0.0.0.0 --port 8000 --reload
+```
+
+Interactive Swagger documentation is automatically available at:
+- **Swagger UI**: `http://localhost:8000/docs`
+- **ReDoc**: `http://localhost:8000/redoc`
+- **Health Check**: `http://localhost:8000/health`
+
+### Making Predictions via REST API
+
+#### Using `curl`:
+```bash
+curl -X POST "http://localhost:8000/predict" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "loan_id": "APP-2026-001",
+    "loan_amnt": 15000.0,
+    "term": "36 months",
+    "int_rate": 11.99,
+    "installment": 498.25,
+    "grade": "B",
+    "sub_grade": "B3",
+    "emp_length": "5 years",
+    "home_ownership": "MORTGAGE",
+    "annual_inc": 75000.0,
+    "verification_status": "Source Verified",
+    "purpose": "debt_consolidation",
+    "addr_state": "CA",
+    "dti": 16.5
+  }'
+```
+
+**Response:**
+```json
+{
+  "loan_id": "APP-2026-001",
+  "default_probability": 0.1824,
+  "decision": "APPROVED",
+  "risk_tier": "LOW",
+  "threshold_applied": 0.35,
+  "recommendation": "Prime credit profile. Approved with preferential terms."
+}
+```
+
+#### Using Python Service Directly:
 ```python
-import joblib
-import pandas as pd
+from src.credit_risk.schemas import LoanApplicationSchema
+from src.credit_risk.service import CreditRiskService
 
-# Load the final model and scaler
-model = joblib.load('models/model_final.pkl')
-scaler = joblib.load('models/scaler_final.pkl')
+service = CreditRiskService()
+application = LoanApplicationSchema(
+    loan_amnt=15000.0,
+    term="36 months",
+    int_rate=11.99,
+    installment=498.25,
+    grade="B",
+    sub_grade="B3",
+    emp_length="5 years",
+    home_ownership="MORTGAGE",
+    annual_inc=75000.0,
+    verification_status="Source Verified",
+    purpose="debt_consolidation",
+    addr_state="CA",
+    dti=16.5
+)
 
-# Prepare your data (must match training features)
-# X_new = pd.DataFrame(...)
+result = service.predict_single(application)
+print(f"Decision: {result.decision} (Default Probability: {result.default_probability:.2%})")
+```
 
-# Scale features
-X_new_scaled = scaler.transform(X_new)
+### Running Automated Tests
 
-# Make predictions
-predictions = model.predict(X_new_scaled)
-probabilities = model.predict_proba(X_new_scaled)
+Execute the comprehensive unit and integration test suite:
+```bash
+pytest tests/ -v
+```
+
+### Deploying with Docker
+
+Build the production multi-stage container image:
+```bash
+docker build -t credit-risk-api:latest .
+```
+
+Run the containerized microservice:
+```bash
+docker run -d -p 8000:8000 --name credit-risk-service credit-risk-api:latest
+```
+
+Verify service health:
+```bash
+curl http://localhost:8000/health
 ```
 
 ## Key Features
+
+- **Unified Inference Pipeline**: Custom Scikit-Learn `ColumnTransformer` handles raw categorical and string inputs directly with zero data leakage.
+- **Pydantic Contract Validation**: Strict schema validation preventing invalid, corrupt, or out-of-range loan inputs.
+- **SHA-256 Checksum Integrity**: Automated cryptographic hash verification protecting serialized model checkpoints against tampering.
+- **High-Precision Financial Arithmetic**: Monetary simulations calculated using `Decimal` to avoid binary floating-point precision loss.
+- **Production REST Microservice**: FastAPI server with async support, Swagger UI, and batch prediction endpoints.
+- **Automated CI/CD & Testing**: 100% test pass rate across schemas, transformers, pipelines, services, and endpoints with GitHub Actions workflow.
 
 - Comprehensive data preprocessing pipeline
 - Handling of imbalanced datasets using SMOTE
@@ -258,7 +350,7 @@ The final tuned XGBoost model achieves:
 
 ## Requirements
 
-- Python 3.7+
+- Python 3.9+
 - pandas
 - numpy
 - scikit-learn
@@ -268,6 +360,11 @@ The final tuned XGBoost model achieves:
 - seaborn
 - joblib
 - scipy
+- pydantic
+- fastapi
+- uvicorn
+- pytest
+- httpx
 
 See `requirements.txt` for specific versions.
 

@@ -131,6 +131,9 @@ cython_debug/
 *.bak
 *.backup
 
-# Project specific - exclude presentation files and old folders
+# Project specific - exclude presentation files, internal prompts, and audit reports
 *.pptx
 MuhammadSyafiiAssubki_VIX_IDX_Partners/
+Prompt/
+prompt/
+qa-report/
