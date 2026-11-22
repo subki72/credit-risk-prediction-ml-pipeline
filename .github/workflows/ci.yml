@@ -7,7 +7,26 @@ on:
     branches: [ main, master ]
 
 jobs:
+  lint:
+    name: Code Quality & Linting
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Ruff
+        run: pip install ruff
+
+      - name: Run Ruff Linter
+        run: ruff check src tests
+
   test:
+    name: Automated Test Suite
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -31,3 +50,28 @@ jobs:
       - name: Run Test Suite with Pytest
         run: |
           pytest tests/ -v
+
+  build-and-security:
+    name: Docker Build & Security Scans
+    needs: [lint, test]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run Semgrep SAST Scanner
+        uses: returntocorp/semgrep-action@v1
+        continue-on-error: true
+        with:
+          config: p/python
+
+      - name: Build Hardened Docker Image
+        run: docker build -t credit-risk-api:ci .
+
+      - name: Run Trivy Container Vulnerability Scanner
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: credit-risk-api:ci
+          format: table
+          exit-code: "0"
+          severity: CRITICAL,HIGH
