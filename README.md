@@ -1,6 +1,73 @@
-# Credit Risk Prediction
+# Credit Risk Prediction ML Pipeline
 
-A comprehensive machine learning project for predicting credit risk using loan data from 2007-2014. This project implements an end-to-end pipeline including exploratory data analysis, data preprocessing, feature engineering, model training with multiple algorithms, hyperparameter tuning, and threshold optimization.
+[![CI Pipeline](https://github.com/subki72/credit-risk-prediction-ml-pipeline/actions/workflows/ci.yml/badge.svg)](https://github.com/subki72/credit-risk-prediction-ml-pipeline/actions/workflows/ci.yml)
+[![Maturity Grade: Production](https://img.shields.io/badge/Maturity%20Grade-Production%20(77.2%2F100)-success.svg)](https://github.com/subki72/credit-risk-prediction-ml-pipeline)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688.svg?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
+[![Tests](https://img.shields.io/badge/tests-19%20passed-brightgreen.svg)](tests/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+A comprehensive machine learning project for predicting credit risk using loan data from 2007-2014. This project implements an end-to-end pipeline including exploratory data analysis, data preprocessing, feature engineering, model training with multiple algorithms, hyperparameter tuning, threshold optimization, and a hardened FastAPI inference microservice.
+
+---
+
+## Quickstart (Single-Command Workflow)
+
+```bash
+git clone https://github.com/subki72/credit-risk-prediction-ml-pipeline.git
+cd credit-risk-prediction-ml-pipeline
+
+# 1. Install pinned dependencies
+make install
+
+# 2. Run automated test suite (19 tests)
+make test
+
+# 3. Run Ruff linter
+make lint
+
+# 4. Launch FastAPI credit risk microservice
+make run
+
+# 5. Build hardened Docker image
+make docker-build
+```
+
+---
+
+## Project Structure
+
+```text
+credit-risk-prediction-ml-pipeline/
+├── .github/
+│   ├── workflows/ci.yml          # Ruff lint, Pytest matrix, Docker build, Semgrep SAST & Trivy
+│   └── dependabot.yml            # Automated weekly security updates
+├── docs/
+│   └── runbook.md                # Production operational runbook & incident playbook
+├── src/credit_risk/              # Modular production package
+│   ├── api.py                    # FastAPI REST endpoints (/health, /predict, /predict/batch)
+│   ├── config.py                 # Centralized paths & thresholds
+│   ├── pipeline.py               # Scikit-Learn leakage-free preprocessing pipeline
+│   ├── reporting.py              # Threshold optimization & Decimal financial impact simulation
+│   ├── schemas.py                # Pydantic v2 input/output contracts
+│   ├── service.py                # SHA-256 verified artifact loader & scoring service
+│   └── transformers.py           # Custom domain feature transformers
+├── tests/                        # 19 automated unit & API integration tests
+├── .gitignore                    # Strict .env & artifact exclusions
+├── .pre-commit-config.yaml       # Pre-commit lint & secret hooks
+├── CHANGELOG.md                  # Semantic release history
+├── CONTRIBUTING.md               # Developer contribution guide
+├── credit_risk_prediction.py     # End-to-end training & evaluation orchestrator
+├── Dockerfile                    # Hardened multi-stage non-root containerfile
+├── LICENSE                       # MIT License
+├── Makefile                      # Single-command workflow targets
+├── pyproject.toml                # Ruff & Pytest project config
+├── README.md                     # Project documentation
+├── requirements-lock.txt         # Deterministic locked dependencies
+├── requirements.txt              # Pinned production dependencies
+├── SECURITY.md                   # Vulnerability disclosure policy
+└── uv.lock                       # Fast package resolver lockfile
+```
 
 ## Project Overview
 
@@ -377,9 +444,19 @@ See `requirements.txt` for specific versions.
 - Add model monitoring and retraining capabilities
 - Implement explainability tools (SHAP, LIME)
 
+## Security & Governance
+
+- **Vulnerability Disclosure**: Review our security reporting guidelines in [SECURITY.md](SECURITY.md).
+- **Operational Runbook**: Production inference diagnostics and SHA-256 rollback procedures in [docs/runbook.md](docs/runbook.md).
+- **Contribution Guidelines**: Development setup and pull request etiquette in [CONTRIBUTING.md](CONTRIBUTING.md).
+- **Release Changelog**: Track semantic releases and version updates in [CHANGELOG.md](CHANGELOG.md).
+- **License**: Explicit open source licensing under the [MIT License](LICENSE).
+
+---
+
 ## License
 
-This project is part of the VIX IDX Partners Data Scientist Internship program.
+Distributed under the MIT License. See [LICENSE](LICENSE) for more information. Originally initiated during the VIX IDX Partners Data Scientist Internship program.
 
 ## Author
 
