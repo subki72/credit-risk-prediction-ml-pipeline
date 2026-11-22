@@ -1,0 +1,18 @@
+[project]
+name = "credit-risk-prediction-ml-pipeline"
+version = "1.0.0"
+description = "Production-grade end-to-end Credit Risk Prediction ML Pipeline & FastAPI microservice."
+readme = "README.md"
+requires-python = ">=3.10"
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v"

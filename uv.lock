@@ -1,0 +1,19 @@
+version = 1
+requires-python = ">=3.10"
+
+[[package]]
+name = "credit-risk-prediction-ml-pipeline"
+version = "1.0.0"
+source = { virtual = "." }
+dependencies = [
+    { name = "pandas" },
+    { name = "numpy" },
+    { name = "scipy" },
+    { name = "scikit-learn" },
+    { name = "xgboost" },
+    { name = "imbalanced-learn" },
+    { name = "joblib" },
+    { name = "fastapi" },
+    { name = "uvicorn" },
+    { name = "pydantic" },
+]
