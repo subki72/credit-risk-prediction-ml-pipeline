@@ -8,7 +8,7 @@ from src.credit_risk.api import app
 client = TestClient(app)
 
 
-def test_health_check_endpoint():
+def test_health_check_endpoint() -> None:
     response = client.get("/health")
     assert response.status_code == 200
     data = response.json()
@@ -17,7 +17,7 @@ def test_health_check_endpoint():
     assert "decision_threshold" in data
 
 
-def test_predict_single_endpoint_success():
+def test_predict_single_endpoint_success() -> None:
     payload = {
         "loan_id": "API-TEST-001",
         "loan_amnt": 12000.0,

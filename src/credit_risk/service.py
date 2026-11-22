@@ -3,8 +3,11 @@ Inference service providing safe model loading, SHA-256 integrity verification, 
 """
 
 import hashlib
+import logging
 import os
 from typing import Any, Dict, List, Optional, Tuple
+
+logger = logging.getLogger(__name__)
 
 import joblib
 import numpy as np
@@ -80,11 +83,13 @@ class CreditRiskService:
     def _load_artifacts(self) -> None:
         """Attempt loading full pipeline or standalone model artifact."""
         if os.path.exists(self.pipeline_path):
+            logger.info("Loading verified ML pipeline artifact from %s", self.pipeline_path)
             self._pipeline = verify_and_load_artifact(self.pipeline_path)
         elif os.path.exists(self.model_path):
+            logger.info("Loading verified standalone model artifact from %s", self.model_path)
             self._model = verify_and_load_artifact(self.model_path)
         else:
-            # Fallback placeholder for testing environments before full training is executed
+            logger.warning("No pre-trained model artifacts found; running in fallback scoring mode")
             self._pipeline = None
             self._model = None
 

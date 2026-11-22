@@ -2,10 +2,13 @@
 FastAPI REST microservice for real-time and batch credit risk predictions.
 """
 
+import logging
 from typing import Any, Dict
 from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+
+logger = logging.getLogger(__name__)
 
 from src.credit_risk import __version__
 from src.credit_risk.schemas import (
@@ -66,8 +69,10 @@ def predict_loan_risk(application: LoanApplicationSchema) -> PredictionResponseS
     and returns default probability alongside an approval decision.
     """
     try:
+        logger.info("Scoring loan application id=%s", application.loan_id)
         return service.predict_single(application)
     except Exception as exc:
+        logger.error("Single loan inference failed: %s", exc)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Inference failure: {str(exc)}"
