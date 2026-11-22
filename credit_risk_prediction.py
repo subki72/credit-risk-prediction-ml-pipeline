@@ -6,6 +6,7 @@ Author  : Muhammad Syafii Assubki (Production-Grade Architecture)
 """
 
 from decimal import Decimal
+import logging
 import os
 import time
 import warnings
@@ -47,7 +48,11 @@ from src.credit_risk.config import (
     TEST_SIZE,
 )
 from src.credit_risk.pipeline import build_full_pipeline
+from src.credit_risk.reporting import optimize_threshold_and_business_impact
 from src.credit_risk.service import save_artifact_with_checksum
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(name)s | %(message)s")
+logger = logging.getLogger(__name__)
 
 
 def setup_environment() -> None:
@@ -716,136 +721,12 @@ def tune_xgboost(
 
 
 # ==============================================================================
-# STAGE 7 — Final Evaluation, Decision Threshold, & Business Simulation
-# ==============================================================================
-def optimize_threshold_and_business_impact(
-    best_model: Any,
-    X_test: pd.DataFrame,
-    y_test: pd.Series,
-    raw_loan_amounts: pd.Series
-) -> None:
-    """Analyze precision-recall curves to find optimal decision threshold and simulate business impact."""
-    print("=" * 70)
-    print("STAGE 7 — Optimal Threshold Analysis & Financial Business Impact")
-    print("=" * 70)
-
-    y_prob = best_model.predict_proba(X_test)[:, 1]
-    threshold_range = np.arange(0.10, 0.90, 0.05)
-    tradeoff_rows = []
-
-    for thr in threshold_range:
-        y_pred_thr = (y_prob >= thr).astype(int)
-        tradeoff_rows.append({
-            'Threshold': round(thr, 2),
-            'Precision': precision_score(y_test, y_pred_thr, zero_division=0),
-            'Recall': recall_score(y_test, y_pred_thr, zero_division=0),
-            'F1-Score': f1_score(y_test, y_pred_thr, zero_division=0),
-            'Bad Detected': int(y_pred_thr[y_test == 1].sum()),
-            'Good Rejected': int(y_pred_thr[y_test == 0].sum())
-        })
-
-    thr_df = pd.DataFrame(tradeoff_rows)
-    best_f1_idx = thr_df['F1-Score'].idxmax()
-    optimal_threshold = float(thr_df.loc[best_f1_idx, 'Threshold'])
-
-    print(thr_df.round(4).to_string(index=False))
-    print(f"\nOptimal Decision Threshold (Maximized F1): {optimal_threshold:.2f}")
-
-    # Threshold Trade-off Curve Plot
-    fig, ax = plt.subplots(figsize=(12, 6))
-    ax.plot(thr_df['Threshold'], thr_df['Precision'], 'b-o', label='Precision', markersize=4)
-    ax.plot(thr_df['Threshold'], thr_df['Recall'], 'r-s', label='Recall', markersize=4)
-    ax.plot(thr_df['Threshold'], thr_df['F1-Score'], 'g-^', label='F1-Score', linewidth=2, markersize=5)
-    ax.axvline(optimal_threshold, color='purple', linestyle='--', linewidth=2, label=f'Optimal Threshold = {optimal_threshold:.2f}')
-    ax.set_xlabel('Probability Threshold', fontsize=13)
-    ax.set_ylabel('Metric Score', fontsize=13)
-    ax.set_title('Precision-Recall Trade-off per Threshold — Tuned XGBoost', fontsize=14, fontweight='bold')
-    ax.legend(fontsize=11)
-    ax.grid(True, alpha=0.3)
-    ax.set_xlim([0.10, 0.85])
-    plt.tight_layout()
-    plt.savefig(f'{IMAGES_DIR}/16_threshold_analysis.png')
-    plt.close()
-    print("[Plot Saved] 16_threshold_analysis.png")
-
-    # Confusion matrix at optimal threshold
-    y_pred_optimal = (y_prob >= optimal_threshold).astype(int)
-    cm_optimal = confusion_matrix(y_test, y_pred_optimal)
-
-    fig, ax = plt.subplots(figsize=(7, 5))
-    sns.heatmap(
-        cm_optimal,
-        annot=True,
-        fmt=',d',
-        cmap='YlOrRd',
-        ax=ax,
-        xticklabels=['Good Loan', 'Bad Loan'],
-        yticklabels=['Good Loan', 'Bad Loan'],
-        annot_kws={'size': 14}
-    )
-    ax.set_xlabel('Predicted Label', fontsize=12)
-    ax.set_ylabel('True Label', fontsize=12)
-    ax.set_title(
-        f'Confusion Matrix — Optimal Threshold ({optimal_threshold:.2f})\n'
-        f'Recall={recall_score(y_test, y_pred_optimal):.3f} | Precision={precision_score(y_test, y_pred_optimal):.3f}',
-        fontsize=12,
-        fontweight='bold'
-    )
-    plt.tight_layout()
-    plt.savefig(f'{IMAGES_DIR}/17_cm_optimal_threshold.png')
-    plt.close()
-    print("[Plot Saved] 17_cm_optimal_threshold.png")
-
-    # High-Precision Financial Impact Simulation using Decimal
-    avg_loan_val = float(raw_loan_amounts.mean()) if not raw_loan_amounts.empty else 15000.0
-    avg_loan_dec = Decimal(str(round(avg_loan_val, 2)))
-    tn, fp, fn, tp = cm_optimal.ravel()
-
-    loss_per_bad_loan = avg_loan_dec * DEFAULT_LOSS_RATE
-    opportunity_cost_per_good_reject = avg_loan_dec * OPPORTUNITY_COST_RATE
-
-    total_loss_no_model = Decimal(int(fn + tp)) * loss_per_bad_loan
-    loss_with_model = Decimal(int(fn)) * loss_per_bad_loan
-    loss_prevented = Decimal(int(tp)) * loss_per_bad_loan
-    missed_opportunity = Decimal(int(fp)) * opportunity_cost_per_good_reject
-    net_financial_saving = loss_prevented - missed_opportunity
-
-    print("\n--- Financial Business Simulation Results (High-Precision Decimal) ---")
-    print(f"Average Loan Principal       : ${avg_loan_dec:,.2f}")
-    print(f"Default Loss Severity (60%)  : ${loss_per_bad_loan:,.2f} per default")
-    print(f"Opportunity Cost (15% margin): ${opportunity_cost_per_good_reject:,.2f} per false rejection")
-    print(f"\nTest Set Metrics ({len(y_test):,} applications):")
-    print(f"  True Positives  (Defaults Caught)   : {tp:,}")
-    print(f"  False Negatives (Defaults Leaked)   : {fn:,}")
-    print(f"  False Positives (Good Loans Denied) : {fp:,}")
-    print(f"  True Negatives  (Good Loans Funded) : {tn:,}")
-    print(f"\nEstimated Financial Totals:")
-    print(f"  Gross Losses Without Model : ${total_loss_no_model:,.2f}")
-    print(f"  Gross Losses With Model    : ${loss_with_model:,.2f}")
-    print(f"  Default Losses Prevented   : ${loss_prevented:,.2f}")
-    print(f"  Opportunity Cost Incurred  : ${missed_opportunity:,.2f}")
-    print(f"  NET FINANCIAL BENEFIT      : ${net_financial_saving:,.2f}")
-
-    # Export Final Production Artifacts with SHA-256 Checksums
-    save_artifact_with_checksum(best_model, f'{MODELS_DIR}/model_final.pkl')
-    scaler = joblib.load(f'{MODELS_DIR}/scaler.pkl')
-    save_artifact_with_checksum(scaler, f'{MODELS_DIR}/scaler_final.pkl')
-
-    print(f"\nFinal Production Artifacts Saved with SHA-256 Integrity Verification:")
-    print(f"  - Model  : {MODELS_DIR}/model_final.pkl (Tuned XGBoost)")
-    print(f"  - Scaler : {MODELS_DIR}/scaler_final.pkl (StandardScaler)")
-    print(f"  - Operational Decision Threshold: {optimal_threshold:.2f}")
-
-
-# ==============================================================================
 # Main Orchestrator
 # ==============================================================================
 def main() -> None:
     """Execute end-to-end pipeline."""
     setup_environment()
-    print("=" * 70)
-    print("STARTING CREDIT RISK PREDICTION PIPELINE")
-    print("=" * 70)
+    logger.info("Starting Credit Risk Prediction Pipeline")
 
     # 1. Load Data
     df = load_and_inspect_data(RAW_DATA_PATH)
@@ -877,9 +758,7 @@ def main() -> None:
         best_xgb, X_test_scaled, y_test, raw_loan_amounts
     )
 
-    print("\n" + "=" * 70)
-    print("CREDIT RISK PREDICTION PIPELINE SUCCESSFULLY COMPLETED")
-    print("=" * 70)
+    logger.info("Credit Risk Prediction Pipeline successfully completed")
 
 
 if __name__ == '__main__':
