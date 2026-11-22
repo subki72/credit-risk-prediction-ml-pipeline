@@ -1,5 +1,5 @@
 # Deterministic locked dependency snapshot
-pandas==2.2.3
+pandas==2.3.3
 numpy==1.26.4
 scipy==1.14.1
 scikit-learn==1.5.2
