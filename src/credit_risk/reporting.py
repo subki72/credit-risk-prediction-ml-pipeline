@@ -3,8 +3,8 @@ Threshold optimization, visualization, and financial business impact reporting
 for the Credit Risk Prediction ML Pipeline.
 """
 
-from decimal import Decimal
 import logging
+from decimal import Decimal
 from typing import Any
 
 import joblib

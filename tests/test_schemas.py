@@ -4,6 +4,7 @@ Unit tests for Pydantic loan application schemas.
 
 import pytest
 from pydantic import ValidationError
+
 from src.credit_risk.schemas import LoanApplicationSchema, PredictionResponseSchema
 
 

@@ -4,11 +4,10 @@ FastAPI REST microservice for real-time and batch credit risk predictions.
 
 import logging
 from typing import Any, Dict
+
 from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-
-logger = logging.getLogger(__name__)
 
 from src.credit_risk import __version__
 from src.credit_risk.schemas import (
@@ -18,6 +17,8 @@ from src.credit_risk.schemas import (
     PredictionResponseSchema,
 )
 from src.credit_risk.service import CreditRiskService
+
+logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="Credit Risk Prediction API",

@@ -5,9 +5,7 @@ Inference service providing safe model loading, SHA-256 integrity verification, 
 import hashlib
 import logging
 import os
-from typing import Any, Dict, List, Optional, Tuple
-
-logger = logging.getLogger(__name__)
+from typing import Any, List, Tuple
 
 import joblib
 import numpy as np
@@ -22,6 +20,8 @@ from src.credit_risk.schemas import (
     LoanApplicationSchema,
     PredictionResponseSchema,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def compute_file_sha256(filepath: str) -> str:
@@ -132,7 +132,6 @@ class CreditRiskService:
 
         probs, decisions = self.predict_dataframe(df_input)
         prob = float(probs[0])
-        decision_val = int(decisions[0])
 
         if prob >= self.threshold:
             decision_label = "REJECTED"

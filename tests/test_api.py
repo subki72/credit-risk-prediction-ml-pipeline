@@ -3,6 +3,7 @@ Integration tests for FastAPI endpoints.
 """
 
 from fastapi.testclient import TestClient
+
 from src.credit_risk.api import app
 
 client = TestClient(app)

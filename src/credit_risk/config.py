@@ -2,8 +2,8 @@
 Configuration settings, feature contracts, and financial parameters for Credit Risk Prediction.
 """
 
-from decimal import Decimal
 import os
+from decimal import Decimal
 from typing import List
 
 # ==============================================================================

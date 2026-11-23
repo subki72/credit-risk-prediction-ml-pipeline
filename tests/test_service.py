@@ -4,11 +4,12 @@ Unit tests for inference service and SHA-256 artifact verification.
 
 import os
 import tempfile
+
 import pytest
+
 from src.credit_risk.schemas import LoanApplicationSchema
 from src.credit_risk.service import (
     CreditRiskService,
-    compute_file_sha256,
     save_artifact_with_checksum,
     verify_and_load_artifact,
 )

@@ -2,7 +2,6 @@
 Custom Scikit-Learn transformers for robust, leak-free feature engineering in Credit Risk.
 """
 
-import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
 

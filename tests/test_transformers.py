@@ -3,7 +3,7 @@ Unit tests for custom Scikit-Learn transformers.
 """
 
 import pandas as pd
-import pytest
+
 from src.credit_risk.transformers import (
     CreditHistoryCalculator,
     EmploymentLengthEncoder,
